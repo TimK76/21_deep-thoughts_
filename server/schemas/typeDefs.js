@@ -30,6 +30,7 @@ type User {
   }
 
   type Query {
+    me: User
     users: [User]
     user(username: String!): User
     thoughts(username: String): [Thought]
@@ -37,9 +38,15 @@ type User {
   }
 
   type Mutation {
-    login(email: String!, password: String!): User
-    addUser(username: String!, email: String!, password: String!): User
+    login(email: String!, password: String!): Auth
+    addUser(username: String!, email: String!, password: String!): Auth
   }
+
+  type Auth {
+    token: ID!
+    user: User
+  }
+
 `;
 
 // export typeDefs

@@ -1,6 +1,6 @@
 const { AuthenticationError } = require('apollo-server-express');
 const { User, Thought } = require('../models');
-
+const { signToken } = require('../utils/auth');
 const resolvers = {
     Query: {
         // get all thoughts
@@ -9,45 +9,60 @@ const resolvers = {
             return Thought.find(params).sort({ createdAt: -1 });
         },
         // get a thought by user id
-        thought: async (parent, {_id}) => {
-            return Thought.findOne({_id});
+        thought: async (parent, { _id }) => {
+            return Thought.findOne({ _id });
         },
         // get all users
         users: async () => {
             return User.find()
-            .select('-__v -password')
-            .populate('friends')
-            .populate('thoughts');
+                .select('-__v -password')
+                .populate('friends')
+                .populate('thoughts');
         },
         // get a user by username
         user: async (parent, { username }) => {
-            return User.findOne({username})
-            .select('-__v -password')
-            .populate('friends')
-            .populate('thoughts');
-        },
-    },
-    Mutation: {
-
-        addUser: async (parent, args) => {
-            const user = await User.create(args);
-
-            return user;
+            return User.findOne({ username })
+                .select('-__v -password')
+                .populate('friends')
+                .populate('thoughts');
         },
 
-        login: async (parent, { email, password }) => {
-            const user = await User.findOne({email});
-
-            if (!user) {
-                throw new AuthenticationError('Incorrect credentials');
+        me: async (parent, args, context) => {
+            if (context.user) {
+              const userData = await User.findOne({ _id: context.user._id })
+                .select('-__v -password')
+                .populate('thoughts')
+                .populate('friends');
+          
+              return userData;
             }
+          
+            throw new AuthenticationError('Not logged in');
+          },
+        Mutation: {
 
-            const correctPw = await user.isCorrectPassword(password);
+            addUser: async (parent, args) => {
+                const user = await User.create(args);
+                const token = signToken(user);
 
-            if(!correctPw) {
-                throw new AuthenticationError('Incorrect credentials');
+                return { token, user };
+            },
+            login: async (parent, { email, password }) => {
+                const user = await User.findOne({ email });
+
+                if (!user) {
+                    throw new AuthenticationError('Incorrect credentials');
+                }
+
+                const correctPw = await user.isCorrectPassword(password);
+
+                if (!correctPw) {
+                    throw new AuthenticationError('Incorrect credentials');
+                }
+
+                const token = signToken(user);
+                return { token, user };
             }
-            return user;
         }
     }
 };
