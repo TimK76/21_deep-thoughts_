@@ -1,17 +1,14 @@
-// import gql tagged tempmlate function
 const { gql } = require('apollo-server-express');
 
-// create our typeDefs
 const typeDefs = gql`
-
-type User {
+  type User {
     _id: ID
     username: String
     email: String
     friendCount: Int
     thoughts: [Thought]
     friends: [User]
-}
+  }
 
   type Thought {
     _id: ID
@@ -29,6 +26,11 @@ type User {
     username: String
   }
 
+  type Auth {
+    token: ID!
+    user: User
+  }
+
   type Query {
     me: User
     users: [User]
@@ -44,13 +46,6 @@ type User {
     addReaction(thoughtId: ID!, reactionBody: String!): Thought
     addFriend(friendId: ID!): User
   }
-
-  type Auth {
-    token: ID!
-    user: User
-  }
-
 `;
 
-// export typeDefs
 module.exports = typeDefs;
